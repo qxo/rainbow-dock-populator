@@ -11,6 +11,8 @@ Populator for [rainbow-dock](https://github.com/asbjornenge/rainbow-dns). It wil
 	--dockerhost     // Docker API URI           (required)
 	--apihost        // Rainbow-dock API URI     (required)
 	--ttl            // Time To Live for records (default 300)
+	--interval       // Query interval           (default 10)
+	--logging        // Logging level quiet|loud (default quiet)
 
 One can pass multiple *--dockerhost* arguments, but only a single *--apihost* (for now). Required format for both are <code>host:port</code>.
 

@@ -2,9 +2,11 @@
 var args    = require('minimist')(process.argv.slice(2), {
     default : {
         ttl      : 300,
-        interval : 2000
+        interval : 10,
+        logging  : 'quiet'
     }
 })
+var fs      = require('fs')
 var request = require('request')
 var Docker  = require('dockerode')
 
@@ -15,9 +17,9 @@ var hosts = args.dockerhost instanceof Array ? args.dockerhost : [args.dockerhos
 hosts = hosts.map(function(host) {
     var details = host.split(':')
     var host_opts = { host : details[0], port : details[1] }
-    if (process.env.DOCKER_CERT_CA)   host_opts.ca   = process.env.DOCKER_CERT_CA
-    if (process.env.DOCKER_CERT_CERT) host_opts.cert = process.env.DOCKER_CERT_CERT
-    if (process.env.DOCKER_CERT_KEY)  host_opts.key  = process.env.DOCKER_CERT_KEY
+    if (process.env.DOCKER_CERT_CA)   host_opts.ca   = fs.readFileSync(process.env.DOCKER_CERT_CA)
+    if (process.env.DOCKER_CERT_CERT) host_opts.cert = fs.readFileSync(process.env.DOCKER_CERT_CERT)
+    if (process.env.DOCKER_CERT_KEY)  host_opts.key  = fs.readFileSync(process.env.DOCKER_CERT_KEY)
     return new Docker(host_opts)
 })
 
@@ -60,13 +62,14 @@ var updateDns = function (containers, callback) {
             method  : 'PUT',
             json    : true,
             body    : { A : [{address:containers[id].NetworkSettings.IPAddress}], ttl : args.ttl },
-            timeout : args.interval / 2
+            timeout : args.interval*1000 / 2
         }, function (err, res) {
             if (err) { console.error('ERROR: Unable to update DNS', err.code); return }
-            if (res.statusCode != 200) console.log(res.statusCode)
+            if (res.statusCode != 200) console.error(res.statusCode)
+            if (args.logging == 'loud') console.log('Successfully updated DNS for container '+id+' with name '+name)
         })
     })
 }
  
 loop()
-setInterval(loop, args.interval)
+setInterval(loop, args.interval*1000)
