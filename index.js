@@ -8,12 +8,21 @@ var args    = require('minimist')(process.argv.slice(2), {
 var request = require('request')
 var Docker  = require('dockerode')
 
+// PARSE & PREP HOSTS
+
 if (!args.dockerhost) { console.error('Missing required argument --dockerhost'); process.exit(1) }
 var hosts = args.dockerhost instanceof Array ? args.dockerhost : [args.dockerhost]
 hosts = hosts.map(function(host) {
     var details = host.split(':')
-    return new Docker({ host : details[0], port : details[1] })
+    var host_opts = { host : details[0], port : details[1] }
+    if (process.env.DOCKER_CERT_CA)   host_opts.ca   = process.env.DOCKER_CERT_CA
+    if (process.env.DOCKER_CERT_CERT) host_opts.cert = process.env.DOCKER_CERT_CERT
+    if (process.env.DOCKER_CERT_KEY)  host_opts.key  = process.env.DOCKER_CERT_KEY
+    return new Docker(host_opts)
 })
+
+// PARSE & PREP API
+
 if (!args.apihost) { console.error('Missing required argument --apihost'); process.exit(1) }
 var api = args.apihost instanceof Array ? 'http://'+args.apihost[0] : 'http://'+args.apihost
 
@@ -27,7 +36,7 @@ var getContainers = function (callback) {
     var currContainers = {}
     hosts.forEach(function(host) {
         host.listContainers(function (err, containers) {
-            if (!containers) { console.error("ERROR: Unable to query containers"); return }
+            if (!containers) { console.error("ERROR: Unable to query containers", err); return }
             var calls = 0, evalEnd = function () { calls++; if (calls == containers.length) callback(currContainers) }
             containers.forEach(function (container, index) {
                 var c = host.getContainer(container.Id)
@@ -60,4 +69,4 @@ var updateDns = function (containers, callback) {
 }
  
 loop()
-setInterval(loop, interval)
+setInterval(loop, args.interval)
