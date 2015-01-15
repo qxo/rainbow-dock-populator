@@ -17,7 +17,9 @@
   },
   "homepage": "https://github.com/asbjornenge/rainbow-dock-populator",
   "dependencies": {
+    "docker-host": "^3.0.0",
     "dockerode": "^2.0.6",
+    "minimist": "^1.1.0",
     "request": "^2.51.0"
   }
 }

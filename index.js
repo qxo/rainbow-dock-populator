@@ -9,14 +9,16 @@ var args    = require('minimist')(process.argv.slice(2), {
 var fs      = require('fs')
 var request = require('request')
 var Docker  = require('dockerode')
+var dockerHost = require('docker-host')
 
 // PARSE & PREP HOSTS
 
 if (!args.dockerhost) { console.error('Missing required argument --dockerhost'); process.exit(1) }
 var hosts = args.dockerhost instanceof Array ? args.dockerhost : [args.dockerhost]
 hosts = hosts.map(function(host) {
-    var details = host.split(':')
-    var host_opts = { host : details[0], port : details[1] }
+    var host_opts = dockerHost(host) 
+    if (host_opts.socketPath) delete host_opts.protocol
+    if (host_opts.protocol) host_opts.protocol = host_opts.protocol.split(':')[0]
     if (process.env.DOCKER_CERT_CA)   host_opts.ca   = fs.readFileSync(process.env.DOCKER_CERT_CA)
     if (process.env.DOCKER_CERT_CERT) host_opts.cert = fs.readFileSync(process.env.DOCKER_CERT_CERT)
     if (process.env.DOCKER_CERT_KEY)  host_opts.key  = fs.readFileSync(process.env.DOCKER_CERT_KEY)
