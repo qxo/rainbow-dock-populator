@@ -3,7 +3,8 @@ var args    = require('minimist')(process.argv.slice(2), {
     default : {
         ttl      : false,
         interval : 10,
-        logging  : 'quiet'
+        logging  : 'quiet',
+        grouptag : false
     }
 })
 var fs      = require('fs')
@@ -59,8 +60,9 @@ var updateDns = function (containers, callback) {
         // Format Name
         var group = containers[id].Config.Image
         if (group.indexOf('/') > 0) group = group.split('/')[1]
-        var name = containers[id].Name + '.' +group;
-        name = name.replace(':','.')
+        var name = containers[id].Name + '.' +group.replace('.','-');
+        if (args.grouptag) name = name.replace(':','-')
+        else name = name.split(':')[0]
 
         // Format Body
         var body = { A : [{address:containers[id].NetworkSettings.IPAddress}] }
