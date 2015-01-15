@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 var args    = require('minimist')(process.argv.slice(2), {
     default : {
-        ttl      : 300,
+        ttl      : false,
         interval : 10,
         logging  : 'quiet'
     }
@@ -55,15 +55,25 @@ var getContainers = function (callback) {
  
 var updateDns = function (containers, callback) {
     Object.keys(containers).forEach(function (id) {
+
+        // Format Name
         var group = containers[id].Config.Image
         if (group.indexOf('/') > 0) group = group.split('/')[1]
         var name = containers[id].Name + '.' +group;
         name = name.replace(':','.')
+
+        // Format Body
+        var body = { A : [{address:containers[id].NetworkSettings.IPAddress}] }
+        if (typeof args.ttl === 'number') body.ttl = args.ttl
+
+        //console.log(name)
+        //console.log(body)
+
         request({
             url     : api+name,
             method  : 'PUT',
             json    : true,
-            body    : { A : [{address:containers[id].NetworkSettings.IPAddress}], ttl : args.ttl },
+            body    : body, 
             timeout : args.interval*1000 / 2
         }, function (err, res) {
             if (err) { console.error('ERROR: Unable to update DNS', err.code); return }
