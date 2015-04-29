@@ -72,8 +72,10 @@ var updateDns = function (containers, callback) {
         //console.log(name)
         //console.log(body)
        var fn = function(name1){
-        //console.log('name'+name1+' ip:'+ip);
-        if(!name1){
+        if(args.debug){
+          console.log('name'+name1+' ip:'+ip);
+        }
+	    if(!name1 || !ip){
            return;
         }
         request({
@@ -88,9 +90,12 @@ var updateDns = function (containers, callback) {
             if (args.logging == 'loud') console.log('Successfully updated DNS for container '+id+' with name '+name1)
         })
         };
-        fn(name);
-        var h = containers[id].Config.Hostname
-        if(name != h){
+        var whichToDns = args.whichToDns  || 'all';
+		if ( whichToDns == 'all' || whichToDns == 'name' ){
+         fn(name);
+        }
+		var h = containers[id].Config.Hostname
+        if( whichToDns == 'all'  && ( name != h)  ||  whichToDns == 'hostname' ){
            fn('/'+h);
         }
 
