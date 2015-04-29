@@ -64,24 +64,36 @@ var updateDns = function (containers, callback) {
         if (args.grouptag) name = name.replace(':','-')
         else name = name.split(':')[0]
 
+ var ip = containers[id].NetworkSettings.IPAddress;
         // Format Body
-        var body = { A : [{address:containers[id].NetworkSettings.IPAddress}] }
+        var body = { A : [{address:ip}] }
         if (typeof args.ttl === 'number') body.ttl = args.ttl
 
         //console.log(name)
         //console.log(body)
-
+       var fn = function(name1){
+        //console.log('name'+name1+' ip:'+ip);
+        if(!name1){
+           return;
+        }
         request({
-            url     : api+name,
+            url     : api+name1,
             method  : 'PUT',
             json    : true,
-            body    : body, 
+            body    : body,
             timeout : args.interval*1000 / 2
         }, function (err, res) {
             if (err) { console.error('ERROR: Unable to update DNS', err.code); return }
             if (res.statusCode != 200) console.error(res.statusCode)
-            if (args.logging == 'loud') console.log('Successfully updated DNS for container '+id+' with name '+name)
+            if (args.logging == 'loud') console.log('Successfully updated DNS for container '+id+' with name '+name1)
         })
+        };
+        fn(name);
+        var h = containers[id].Config.Hostname
+        if(name != h){
+           fn('/'+h);
+        }
+
     })
 }
  
